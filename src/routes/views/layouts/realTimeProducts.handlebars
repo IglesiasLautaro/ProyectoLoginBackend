@@ -1,0 +1,37 @@
+<h1>Items dentro de la base de datos</h1>
+<form id="selectProduct">
+    <h3>Borrar un item</h3>
+    ID:<input type="number" id="iD" placeholder="ID of Item"> *ID solo para borrar</br>
+    <button type="button" id="delete_Button" class="swal-button swal-button--confirm">Eliminar</button>
+
+    <h3>Add an item</h3>
+    Nombre: <input type="text" id="title" placeholder="Name of item"></br>
+    Descripcion: <input type="text" id="description" placeholder="Description of item"></br>
+    Code: <input type="text" id="code" placeholder="codename of item"></br>
+    Price:<input type="number" id="price" placeholder="Price"></br>
+    Cantidad: <input type="number" id="stock" placeholder="Quantity"></br>
+    Categoria:  <input type="text" id="category" placeholder="Category"></br>
+    Imagen: <input type="URL" id="IMG" placeholder="OPTIONAL Url Img"></br>
+    <button type="submit" id="add_Button" class="swal-button swal-button--confirm">Añadir item</button>
+
+</form>
+
+<h1>Lista de productos</h1>
+
+<div>
+        {{#each items}}
+        <ul id={{this.id}}>
+        <h2>ID:{{this.id}} Name: {{this.title}}</h2>
+        <img src="{{this.thumbnail}}">
+        <li>Description: {{this.description}}</li>
+        <li>Code: {{this.code}}</li>
+        <li>Price: {{this.price}} </li>
+        <li>category:{{this.category}}</li>
+        </ul>
+        </br>
+        {{/each}}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+<script type="module" src="/js/index.js"></script>

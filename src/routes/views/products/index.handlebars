@@ -1,0 +1,26 @@
+<h1>Lista de Productos</h1>
+
+{{#each products}}
+  <div>
+    <h2>{{name}}</h2>
+    <p>{{description}}</p>
+    <!-- Botón para ver detalles y agregar al carrito -->
+    <a href="/products/{{_id}}">Ver Detalles</a>
+    <form id="addToCartForm" data-product-id="{{_id}}">
+      <button type="submit">Agregar al Carrito</button>
+    </form>
+  </div>
+{{/each}}
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+
+  document.querySelectorAll('#addToCartForm').forEach(form => {
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const productoId = form.getAttribute('data-product-id');
+      socket.emit('add-to-cart', productoId);
+    });
+  });
+</script>

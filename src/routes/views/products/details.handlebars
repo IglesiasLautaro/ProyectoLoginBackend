@@ -1,0 +1,21 @@
+<h1>{{title}}</h1>
+<p>{{description}}</p>
+<p>Precio: {{price}}</p>
+<p>Categoría: {{category}}</p>
+<p>Thumbnail: {{thumbnail}}</p>
+<p>Stock: {{stock}}</p>
+
+<form id="addToCartForm" data-product-id="{{_id}}">
+  <button type="submit">Agregar al Carrito</button>
+</form>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+
+  document.querySelector('#addToCartForm').addEventListener('submit', (event) => {
+    event.preventDefault();
+    const productoId = document.querySelector('#addToCartForm').getAttribute('data-product-id');
+    socket.emit('add-to-cart', productoId);
+  });
+</script>
