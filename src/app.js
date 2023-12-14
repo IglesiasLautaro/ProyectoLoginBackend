@@ -14,15 +14,42 @@ import { mongoose } from './config/database.js';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
 
+import MongoStore from 'connect-mongo'
+import "dotenv/config.js";
+import passport from "passport";
+import initializePassport from "./config/passport.config.js";
+
+import loginRouter from './routers/views/loging.js'
+import registerRouter from './routers/views/register.js'
+import sessionsApiRouter from './routers/api/sessions.js'
+import profileRouter from "./routers/views/profile.js";
+import recoveryPassword from "./routers/views/recoverypassword.js";
+
 app.use(session({
-    secret:"DemonSeeksKnowledge",
+    secret:process.env.hash,
     resave: false,
     saveUninitialized: true,
     store: MongoStore.create({
-        mongoUrl:"mongodb+srv://lautaroiglesias:LI001cba@ecommerce.qqzcmwk.mongodb.net/?retryWrites=true&w=majority"
-        ,tls: 2*60    
+        mongoUrl:process.env.mongo,
+        ttl: 4*60,
+        autoRemove:"native"    
     }),
 }));
+
+
+initializePassport();
+app.use(passport.initialize());
+app.use(passport.session());
+
+// app.use(session({
+//     secret:"DemonSeeksKnowledge",
+//     resave: false,
+//     saveUninitialized: true,
+//     store: MongoStore.create({
+//         mongoUrl:"mongodb+srv://lautaroiglesias:LI001cba@ecommerce.qqzcmwk.mongodb.net/?retryWrites=true&w=majority"
+//         ,tls: 2*60    
+//     }),
+// }));
 
 const db = async() => {
     await mongoose.connect(
@@ -48,6 +75,8 @@ app.use('/',indexRouter);
 app.use('/login',loginRouter);
 app.use('/register',registerRouter);
 app.use('/api/sessions',sessionsApiRouter);
+app.use("/recovery", recoveryPassword);
+app.use("/profile", profileRouter);
 
 app.engine('handlebars', handlebars.engine());
 app.set('view engine', 'handlebars');
