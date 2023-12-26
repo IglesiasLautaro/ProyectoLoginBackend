@@ -1,16 +1,29 @@
-import userModel from "../dao/models/user.model.js";
+import userModel from "../models/user.model.js";
 import io from "../app.js"
-import Cartrouter from '../dao/models/carts.model.js'; 
+import Cart from '../models/carts.model.js'; ///cada usario ligado a un carrito
 
+import { createHash, isValidPassword } from "../utils.js";
 
+/////////////////////registro de usuario////////// y creacion de carrito
 export const registerUser =async (req,res) =>{
 
     try{
         const {name ,email,password} =req.body
         
-        const user = new userModel({name,email,password});
+        if (!name || !email || !password){
+            return res.status(401)
+            .send({ status: "Error", error: "Incomplete values" });
+        }
+        const user = new userModel({ name, email, password: createHash(password) });
         await user.save();
-        res.redirect("/");
+        user.password=undefined
+        try{
+        const cart =new Cart({username:name}); //para despues de la revision de sgunda entrega
+        const newCart = await cart.save(); 
+        res.redirect("/");}
+        catch(error){
+            console.log("error creating cart",error)
+        }
 
     }catch(error){
         console.log("Error register")
@@ -18,6 +31,7 @@ export const registerUser =async (req,res) =>{
     }
 }
 
+/////////////////log in 
 export const loginUser = async (req,res) =>{
     try{
         const { email,password} =req.body;
@@ -31,20 +45,28 @@ export const loginUser = async (req,res) =>{
         }
         else{
         
-        const user = await userModel.findOne({email,password});
-        
-        if(user){
+        const user = await userModel.findOne({ email },{ email: 1, name: 1, password: 1 });
+        if (!user){
+            console.log("User or password incorrect");
+            //await io.emit("somethig_wrong") //para despues
+            return res.redirect("/")
+            //res.status(501).json({error:"User or password incorrect"})
+            }
+        else if (!isValidPassword(user, password)){
+            return res.status(401).send({
+              status: "Error",
+              error: "Usuario y/o contraseña incorrecta 2",
+            });}
+        else{
             console.log("User id found connecting")
+            user.password=undefined;
+            user.role="User"
+            console.log(user)
             req.session.user=user;
             req.session.admin=false;
+            io.emit("current_user",req.session.user);
             io.emit("log_success")
             res.redirect("/api/products/")
-        }else{
-
-            console.log("User or password incorrect");
-            await io.emit("somethig_wrong") //para despues
-            res.redirect("/")
-            res.status(501).json({error:"User or password incorrect"})
         }
     }
     }catch(error){
@@ -53,7 +75,7 @@ export const loginUser = async (req,res) =>{
     }
     
 }
-
+/////////////////////////log_out
 export const logOut =async (req,res) =>{
     try{
         if(req.session.user){
@@ -63,6 +85,7 @@ export const logOut =async (req,res) =>{
                 console.log("error clossing current session",error);
                 res.status(500).send("Error clossing session",error)
             }else{
+                console.log("see you soon")
                 res.redirect("/")
             }
         })}
@@ -73,3 +96,14 @@ export const logOut =async (req,res) =>{
         res.status(500).send("Error clossing session")
     }
 }
+/////////////////////recoperar o simplemente cambiar contraseña
+export const recoveryPassword = async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      await userModel.updateOne({ email }, { password: createHash(password) });
+      res.redirect("/");
+    } catch (error) {
+      console.error("Error al recuperar contraseña", error);
+      res.status(500).send("Error al cerrar la sesión");
+    }
+  };
