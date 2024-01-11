@@ -3,7 +3,7 @@ import express from 'express';
 import { productRouter } from "../src/routes/products.routes.js";
 import { cartRouter } from "../src/routes/carts.routes.js";
 import path from 'path';
-
+import {db} from "./config/database.js"
 import __dirname from './utils/utils.js';
 import handlebars from 'express-handlebars';
 
@@ -19,6 +19,7 @@ import "dotenv/config.js";
 import passport from "passport";
 import initializePassport from "./config/passport.config.js";
 
+import { Server } from 'socket.io';
 import loginRouter from './routers/views/loging.js'
 import registerRouter from './routers/views/register.js'
 import sessionsApiRouter from './routers/api/sessions.js'
@@ -41,15 +42,16 @@ initializePassport();
 app.use(passport.initialize());
 app.use(passport.session());
 
-// app.use(session({
-//     secret:"DemonSeeksKnowledge",
-//     resave: false,
-//     saveUninitialized: true,
-//     store: MongoStore.create({
-//         mongoUrl:"mongodb+srv://lautaroiglesias:LI001cba@ecommerce.qqzcmwk.mongodb.net/?retryWrites=true&w=majority"
-//         ,tls: 2*60    
-//     }),
-// }));
+app.use(session({
+    secret:process.env.hash,
+    resave: false,
+    saveUninitialized: true,
+    store: MongoStore.create({
+        mongoUrl:process.env.MONGO_URL,
+        ttl: 4*60,
+        autoRemove:"native"    
+    }),
+}));
 
 const db = async() => {
     await mongoose.connect(
