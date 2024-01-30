@@ -1,10 +1,18 @@
-// import * as cartDao from "../persistence/carts.dao.js"
+import CartsDAO from "../dao/carts.dao.js";
 
-// const getCart=(user) =>{
-//     return cartDao.addCart(user);
-// }
-// const createCart =(name)=>{
-//     return  cartDao.addCart(name);
-// }
+const carts=new CartsDAO()
 
-// export {createCart,getCart}
+const getCart=(user)=>{
+     return carts.getCart(user);
+}
+const emptyCart=(id,cart_info)=>{
+    return carts.emptyCart(id,cart_info);
+}
+
+const updateOne=(info,cart)=>{
+    return carts.updateOne(info,cart)
+}
+const addCart=(username)=>{
+    return carts.addCart(username)
+}
+export {getCart,emptyCart,updateOne,addCart}

@@ -1,33 +1,49 @@
 import {Router} from "express"
 import transport from "../email.util.js"
 import emailConfig from "../config/email.config.js"
-import ticketDAO from "../dao/tickets.dao.js"
+//import ticketDAO from "../dao/tickets.dao.js"
+import * as tickets from "../Services/TiketService.js"
 
 
 import {v4 as uuidv4} from "uuid"
-import CartsDAO from "../dao/carts.dao.js";
-import ProductsDAO from "../dao/products.dao.js"
+//import CartsDAO from "../dao/carts.dao.js";
+import * as carts from "../Services/CartService.js"
+//import ProductsDAO from "../dao/products.dao.js"
+import * as product from "../Services/ProductService.js"
+
 
 import path from 'path';
 import { fileURLToPath } from 'url';
+
+
+/////////////////////////errors
+import CustomError from "../utils/Custom.error.js";
+import * as InfoError from "../utils/info.error.js"
+import EnumError from "../utils/enum.error.js";
+//////////////////////////
 
 const __filename = fileURLToPath(import.meta.url);
 
 const __dirname = path.dirname(__filename);
 
-const carts=new CartsDAO();
-const product = new ProductsDAO();
-const tickets=new ticketDAO();
+//const carts=new CartsDAO();
+//const product = new ProductsDAO();
+//const tickets=new ticketDAO();
 const mailRouter =Router();
 
 mailRouter.get("/:cid",async (req,res)=>{
     try{
    
-    if(req.session.user===undefined){
-        console.log("oh no, the session expired")
-        res.redirect("/")
-        return;
-    }
+        if(req.session.user===undefined){
+            CustomError.createError({
+              name:"User Session error",
+              cause:InfoError.generateUserSesErrorInfo(),
+              message:"Session has closed",
+              code:EnumError.ROUTING_ERROR
+            });        
+            res.redirect("/")
+            return;
+        }
     const purchase_datetime = new Date().toISOString();
     const code=uuidv4()
     const cart =await carts.getCart(req.session.user.name)

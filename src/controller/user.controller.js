@@ -1,6 +1,13 @@
 import {Router} from "express";
-import UserDAO from "../dao/users.dao.js";
-import CartsDAO from "../dao/carts.dao.js";
+//import UserDAO from "../dao/users.dao.js";
+//import CartsDAO from "../dao/carts.dao.js";
+import * as Users from "../Services/UserService.js"
+import * as Cart from "../Services/CartService.js"
+
+/////////////////////////errors
+import CustomError from "../utils/Custom.error.js";
+import * as InfoError from "../utils/info.error.js"
+import EnumError from "../utils/enum.error.js";
 //////////////////////////
 import "dotenv/config.js";
 import { createHash, isValidPassword } from "../utils.js";
@@ -12,23 +19,35 @@ import {  authToken,
     passportCall, } from "../utils.js";
 /////////////////
 
-const Users = new UserDAO();
-const Cart = new CartsDAO();
+//const Users = new UserDAO();
+//const Cart = new CartsDAO();
 const UserRouter = Router();
 /////////////// register 
 UserRouter.post("/register",async (req,res)  => {
+  const { name,last_name, email,age,password } = req.body;
     try {
-      const { name,last_name, email,age,password } = req.body;
-  
-      let user = await Users.getUser(email);
       //console.log(user)
       if (!name || !email || !password){
-        return res.status(401)
-        .send({ status: "Error", error: "Incomplete values" });
+        
+      CustomError.createError({
+        name:"User creation error",
+        cause:InfoError.generateUserRegErrorInfo({name,last_name,email,age}),
+        message:"Error creating the user",
+        code:EnumError.USER_ERROR
+      });
+      res.redirect("/register");
+      return;
     }
+    let user = await Users.getUser(email);
       if (user) {
-        console.log("Usuario ya existe, intente otro email o inicie sesion");
+        CustomError.createError({
+          name:"User creation error",
+          cause:"User already exist in database",
+          message:"Error creating the user",
+          code:EnumError.USER_ERROR
+        });        
         res.redirect("/register")
+        return;
       }else{
        ////////////////////////////////////////////
       const today = new Date();
@@ -36,8 +55,14 @@ UserRouter.post("/register",async (req,res)  => {
       const currentYear = today.getFullYear();
       const current_age = currentYear - birthYear;
       if(current_age< 18){
-        console.log("user underage")
-        res.redirect("/login")
+        CustomError.createError({
+          name:"User creation error",
+          cause:InfoError.generateUserAgeErrorInfo(),
+          message:"Error creating the user",
+          code:EnumError.USER_ERROR
+        });
+        res.redirect("/login");
+        return;
       }
       //////////////////////////////////////////////
       //console.log("attempting savingcart")
@@ -56,12 +81,23 @@ UserRouter.post("/register",async (req,res)  => {
       console.log("Success",result)
       res.redirect("/login")}
     } catch (error) {
-      console.log("Error creating"+error)
-      res.redirect("/login")
+      console.log(error)
+      res.redirect("/register")
     }
 });
 
 UserRouter.get("/current", async (req,res) =>{
+      if(req.session.user===undefined){
+        CustomError.createError({
+          name:"User Session error",
+          cause:InfoError.generateUserSesErrorInfo(),
+          message:"Session has closed",
+          code:EnumError.ROUTING_ERROR
+        });        
+        res.redirect("/")
+        return;
+    }
+    
     let user_data=req.user.user
     //res.send({ status: "success", payload: req.user });
     let data = {
@@ -94,16 +130,26 @@ UserRouter.post("/login",async (req,res) =>{
         
         let user = await Users.getUser(email);
         if (!user){
-          console.log("User or password incorrect");
+          //console.log("User or password incorrect");
           //await io.emit("somethig_wrong") //para despues
-          return res.redirect("/")
+          CustomError.createError({
+            name:"User Log Error",
+            cause:InfoError.generateUserLogError(),
+            message:"Error while logging in",
+            code:EnumError.USER_ERROR
+          });
+          return res.redirect("/login")
           //res.status(501).json({error:"User or password incorrect"})
           }
       else if (!isValidPassword(user, password)){
-          return res.status(401).send({
-            status: "Error",
-            error: "Usuario y/o contraseña incorrecta 2",
-          });}
+        CustomError.createError({
+          name:"User Log Error",
+          cause:InfoError.generateUserLogError(),
+          message:"Error while logging in",
+          code:EnumError.USER_ERROR
+        });
+        return res.redirect("/login")
+        }
       else{
           console.log("User id found connecting")
           user.password=undefined;

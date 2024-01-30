@@ -1,15 +1,16 @@
-// import * as usersDao from "../persistence/users.dao.js"
-// const getUser=(username)=>{
-//     return usersDao.getUser(username);
-// }
+import UserDAO from "../dao/users.dao.js";
 
+const Users = new UserDAO();
 
-// const addUser=(newUser)=>{
-//     return usersDao.addUser(newUser);
-// }
+const getUser=(username)=>{
+    return Users.getUser(username);
+}
 
+const addUser=(user_info)=>{
+    return Users.addUser(user_info);
+}
+const resetPass=(email,password)=>{
+    return Users.resetPass(email,password);
+}
 
-// const resetPass=(email,password) =>{
-//     return usersDao.resetPass(email,password)
-// }
-// export {getUser,addUser,resetPass}
+export { getUser,addUser,resetPass}
